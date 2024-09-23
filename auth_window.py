@@ -1,7 +1,6 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox, QSpacerItem, QSizePolicy
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QApplication, QMessageBox, QSpacerItem, QSizePolicy
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont
-
 
 class AuthWindow(QWidget):
     login_success = pyqtSignal()  # Сигнал для успешного логина
@@ -75,7 +74,7 @@ class AuthWindow(QWidget):
         layout.addWidget(self.login_input)
         layout.addWidget(self.password_input)
         layout.addWidget(self.button_login)
-        
+
         # Добавляем вертикальные отступы
         layout.addItem(QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
 
@@ -105,6 +104,14 @@ class AuthWindow(QWidget):
 
         # Пример проверки логина и пароля
         if login == "user" and password == "pass":  # Замените на вашу логику
+            print("Успешный вход.")  # Отладочный вывод
             self.login_success.emit()  # Генерируем сигнал успешного входа
         else:
             QMessageBox.warning(self, 'Ошибка', 'Неверный логин или пароль.')
+
+if __name__ == "__main__":
+    import sys
+    app = QApplication(sys.argv)
+    auth_window = AuthWindow()
+    auth_window.show()
+    sys.exit(app.exec())

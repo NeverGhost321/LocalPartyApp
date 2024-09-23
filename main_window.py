@@ -1,12 +1,11 @@
-from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QListWidget, QGridLayout
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QGridLayout, QSizePolicy
+from PyQt6.QtGui import QPixmap, QIcon
 from PyQt6.QtCore import Qt
-
 
 class MainWindow(QWidget):
     def __init__(self, username="Guest", ratings={}, is_own_profile=True):
         super().__init__()
-        
+
         # Настройка окна
         self.setWindowTitle("Профиль пользователя")
         self.setGeometry(100, 100, 800, 600)
@@ -57,17 +56,14 @@ class MainWindow(QWidget):
         # Кнопка "Write review" только для чужих профилей
         if not self.is_own_profile:
             write_review_button = QPushButton('Write Review', self)
-            write_review_button.clicked.connect(self.write_review)
             grid_layout.addWidget(write_review_button, 1, 2, 1, 1)  # Вторая колонка, вторая строка
 
-        # Устанавливаем основной макет
+        # Добавляем макет в главное окно
         self.setLayout(grid_layout)
 
     def open_chat(self, item):
-        print(f"Opening chat with {item.text()}")  # Замените на свою логику открытия чата
-
-    def write_review(self):
-        print("Opening review dialog...")  # Замените на свою логику написания отзыва
+        print(f"Open chat with: {item.text()}")  # Отладочный вывод
 
     def exit_to_login(self):
-        print("Exiting to login...")  # Здесь добавьте логику для выхода на экран логина
+        print("Выход из системы.")  # Отладочный вывод
+        self.close()  # Закрываем главное окно
