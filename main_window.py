@@ -1,69 +1,173 @@
-from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QGridLayout, QSizePolicy
-from PyQt6.QtGui import QPixmap, QIcon
+import sys
+from PyQt6.QtWidgets import (
+    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
+    QPushButton, QListWidget, QListWidgetItem, QFrame, QStackedWidget
+)
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont, QPixmap, QIcon
+from review_window import ReviewWindow
+from avatar_label import AvatarLabel
+from chat_window import ChatWindow
 
 class MainWindow(QWidget):
-    def __init__(self, username="Guest", ratings={}, is_own_profile=True):
+    def __init__(self):
         super().__init__()
 
-        # Настройка окна
-        self.setWindowTitle("Профиль пользователя")
-        self.setGeometry(100, 100, 800, 600)
+        self.setWindowTitle("Главное окно")
+        self.setGeometry(100, 100, 1000, 600)
+        self.setFixedSize(1000, 600)
 
-        # Сохраняем имя пользователя и его оценки
-        self.username = username
-        self.ratings = ratings  # Словарь с оценками
-        self.is_own_profile = is_own_profile  # Показываем кнопку отзыва только для чужих профилей
+        layout = QHBoxLayout()
 
-        # Основной макет
-        grid_layout = QGridLayout()
+        # Левая колонка с блоком чатов, занимающая 1/3 ширины страницы
+        self.left_column = QFrame(self)
+        self.left_column.setStyleSheet("background-color: #222222; border-radius: 10px; padding: 10px;")
+        self.left_column.setFixedWidth(self.width() // 3)
+        self.left_column_layout = QVBoxLayout(self.left_column)
 
-        # -------- Левая колонка --------
-        # Маленький аватар
-        small_avatar_label = QLabel(self)
-        small_avatar_label.setPixmap(QPixmap('avatar.png').scaled(50, 50, Qt.AspectRatioMode.KeepAspectRatio))
-        grid_layout.addWidget(small_avatar_label, 0, 0)
+        # Мини-профиль пользователя над блоком чатов
+        self.mini_profile = QFrame(self.left_column)
+        self.mini_profile_layout = QHBoxLayout(self.mini_profile)
 
-        # Имя пользователя
-        small_username_label = QLabel(self.username, self)
-        grid_layout.addWidget(small_username_label, 0, 1)
+        # Аватар в мини-профиле (увеличен до 60px)
+        self.mini_avatar = AvatarLabel("avatar.png", 60, self)
+        self.mini_profile_layout.addWidget(self.mini_avatar)
 
-        # Список чатов
-        chat_list = QListWidget(self)
-        chat_list.addItems(['User 1', 'User 2', 'User 3'])  # Пример чатов
-        chat_list.itemClicked.connect(self.open_chat)  # Открываем чат при клике
-        grid_layout.addWidget(chat_list, 1, 0, 2, 2)
+        # Имя пользователя в мини-профиле (увеличен размер текста)
+        self.username_label = QLabel("Имя пользователя", self)
+        self.username_label.setStyleSheet("color: #ffffff; font-size: 18px;")
+        self.mini_profile_layout.addWidget(self.username_label)
 
-        # Кнопка для поиска пользователей
-        search_button = QPushButton('Search Users', self)
-        grid_layout.addWidget(search_button, 3, 0, 1, 2)
+        self.mini_profile.mousePressEvent = self.show_profile  # Клик по мини-профилю возвращает профиль
+        self.left_column_layout.addWidget(self.mini_profile)
 
-        # Кнопка "Start game"
-        start_game_button = QPushButton('Start game', self)
-        grid_layout.addWidget(start_game_button, 4, 0, 1, 2)  # На всю ширину
+        # Список чатов с аватарами пользователей (увеличены аватары и размер текста)
+        self.chat_list = QListWidget(self.left_column)
+        self.chat_list.setStyleSheet("""
+            QListWidget {
+                background-color: #333333;
+                color: #ffffff;
+                border-radius: 10px;
+                padding: 10px;
+            }
+            QListWidget::item {
+                padding: 10px;
+            }
+        """)
 
-        # Кнопка "Exit"
-        exit_button = QPushButton('Exit', self)
-        exit_button.clicked.connect(self.exit_to_login)  # Связываем с функцией выхода
-        grid_layout.addWidget(exit_button, 5, 0, 1, 2)  # На всю ширину
+        for i in range(10):
+            item = QListWidgetItem(f"Пользователь {i + 1}")
+            icon = QIcon(QPixmap("avatar.png").scaled(40, 40))  # Аватары размером 40x40
+            item.setIcon(icon)
+            self.chat_list.addItem(item)
 
-        # -------- Правая колонка --------
-        # Здесь будет отображаться либо свой профиль, либо профиль другого пользователя
-        profile_info = QLabel(self)
-        profile_info.setText(f"Profile Information for {self.username}")  # Пример текста профиля
-        grid_layout.addWidget(profile_info, 0, 2, 1, 1)  # Вторая колонка, первая строка
+        self.chat_list.itemClicked.connect(self.open_chat_window)
+        self.left_column_layout.addWidget(self.chat_list)
 
-        # Кнопка "Write review" только для чужих профилей
-        if not self.is_own_profile:
-            write_review_button = QPushButton('Write Review', self)
-            grid_layout.addWidget(write_review_button, 1, 2, 1, 1)  # Вторая колонка, вторая строка
+        # Правая колонка с большим профилем и рейтингом
+        self.right_column = QFrame(self)
+        self.right_column.setStyleSheet("""
+            QFrame {
+                background-color: #222222; 
+                border-radius: 10px;
+                background-image: url('bg.png');
+                background-position: center;
+                background-repeat: no-repeat;
+            }
+        """)
+        self.right_column_layout = QVBoxLayout(self.right_column)
 
-        # Добавляем макет в главное окно
-        self.setLayout(grid_layout)
+        # Большой профиль пользователя
+        self.profile_header = QFrame(self.right_column)
+        profile_header_layout = QHBoxLayout(self.profile_header)
 
-    def open_chat(self, item):
-        print(f"Open chat with: {item.text()}")  # Отладочный вывод
+        self.avatar = AvatarLabel("avatar.png", 120, self)
+        profile_header_layout.addWidget(self.avatar)
 
-    def exit_to_login(self):
-        print("Выход из системы.")  # Отладочный вывод
-        self.close()  # Закрываем главное окно
+        self.profile_name = QLabel("Имя пользователя", self)
+        self.profile_name.setStyleSheet("color: #ffffff; font-size: 24px;")
+        profile_header_layout.addWidget(self.profile_name)
+
+        self.right_column_layout.addWidget(self.profile_header)
+
+        # Оценка пользователя
+        self.user_rating = QLabel("Рейтинг: 4.8", self)
+        self.user_rating.setStyleSheet("color: #ffffff; font-size: 18px;")
+        self.right_column_layout.addWidget(self.user_rating)
+
+        # Кнопка "Оценить"
+        self.rate_button = QPushButton("Оценить", self)
+        self.rate_button.setFixedSize(150, 40)
+        self.rate_button.setStyleSheet("""
+            QPushButton {
+                background-color: #444444;
+                color: #ffffff;
+                border-radius: 20px;
+            }
+            QPushButton:hover {
+                background-color: #555555;
+            }
+        """)
+        self.rate_button.clicked.connect(self.open_review_window)
+        self.right_column_layout.addWidget(self.rate_button, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        # Кнопка выхода
+        self.logout_button = QPushButton("Выйти", self)
+        self.logout_button.setFixedSize(100, 40)
+        self.logout_button.setStyleSheet("""
+            QPushButton {
+                background-color: #444444;
+                color: #ffffff;
+                border-radius: 20px;
+            }
+            QPushButton:hover {
+                background-color: #555555;
+            }
+        """)
+        self.right_column_layout.addWidget(self.logout_button, alignment=Qt.AlignmentFlag.AlignBottom)
+
+        layout.addWidget(self.left_column)
+        layout.addWidget(self.right_column)
+
+        self.setLayout(layout)
+
+    def open_review_window(self):
+        self.review_window = ReviewWindow(self)
+        self.review_window.rating_submitted.connect(self.update_rating)
+        self.review_window.show()
+
+    def update_rating(self, rating):
+        self.user_rating.setText(f"Рейтинг: {rating:.1f}")
+
+    def update_profile(self, username):
+        self.username_label.setText(username)
+        self.profile_name.setText(username)
+
+    def open_chat_window(self, item):
+        # Удаляем все виджеты из правой колонки
+        for i in reversed(range(self.right_column_layout.count())):
+            widget_to_remove = self.right_column_layout.itemAt(i).widget()
+            if widget_to_remove:
+                widget_to_remove.deleteLater()
+
+        # Добавляем виджет чата вместо профиля
+        chat_window = ChatWindow(item.text(), self)
+        self.right_column_layout.addWidget(chat_window)
+
+    def show_profile(self, event=None):
+        # Восстанавливаем большой профиль
+        for i in reversed(range(self.right_column_layout.count())):
+            widget_to_remove = self.right_column_layout.itemAt(i).widget()
+            if widget_to_remove:
+                widget_to_remove.deleteLater()
+
+        self.right_column_layout.addWidget(self.profile_header)
+        self.right_column_layout.addWidget(self.user_rating)
+        self.right_column_layout.addWidget(self.rate_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.right_column_layout.addWidget(self.logout_button, alignment=Qt.AlignmentFlag.AlignBottom)
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    main_window = MainWindow()
+    main_window.show()
+    sys.exit(app.exec())

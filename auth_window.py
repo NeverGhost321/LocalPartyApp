@@ -1,96 +1,139 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QApplication, QMessageBox, QSpacerItem, QSizePolicy
+import sys
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QApplication,
+    QMessageBox, QSpacerItem, QSizePolicy, QHBoxLayout
+)
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont
 
 class AuthWindow(QWidget):
-    login_success = pyqtSignal()  # Сигнал для успешного логина
+    login_success = pyqtSignal(str)  # Передача имени пользователя при успешной авторизации
 
     def __init__(self):
         super().__init__()
 
-        # Настройка окна
         self.setWindowTitle("Sosi")
         self.setGeometry(100, 100, 400, 400)
         self.setFixedSize(400, 400)
 
-        # Основной макет для элементов
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Стили и шрифты
-        font_title = QFont('Arial', 16)
-        font_button = QFont('Arial', 12)
+        font_title = QFont('Segoe UI', 24)
+        font_subtitle = QFont('Segoe UI', 16)
+        font_button = QFont('Segoe UI', 10)
+        font_input = QFont('Segoe UI', 14)
 
-        # Создаем заголовок "Login"
+        self.label_subtitle = QLabel('LocalPartyChat', self)
+        self.label_subtitle.setFont(font_subtitle)
+        self.label_subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label_subtitle.setStyleSheet("color: #ffffff;")
+
         self.label_title = QLabel('Login', self)
         self.label_title.setFont(font_title)
         self.label_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label_title.setStyleSheet("color: #ffffff;")
 
-        # Поле для ввода логина
         self.login_input = QLineEdit(self)
         self.login_input.setPlaceholderText('Login')
-        self.login_input.setFixedHeight(30)
+        self.login_input.setFixedHeight(40)
+        self.login_input.setStyleSheet("""
+            QLineEdit {
+                background-color: #222222; 
+                color: #ffffff; 
+                border: 1px solid #222222;  
+                border-radius: 20px;  
+                padding-left: 10px;  
+                text-align: center;  
+            }
+        """)
+        self.login_input.setFont(font_input)
 
-        # Поле для ввода пароля
         self.password_input = QLineEdit(self)
         self.password_input.setPlaceholderText('Password')
-        self.password_input.setFixedHeight(30)
+        self.password_input.setFixedHeight(40)
         self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self.password_input.setStyleSheet("""
+            QLineEdit {
+                background-color: #222222; 
+                color: #ffffff; 
+                border: 1px solid #222222; 
+                border-radius: 20px;  
+                padding-left: 10px;  
+                text-align: center;  
+            }
+        """)
+        self.password_input.setFont(font_input)
 
-        # Кнопка "Login"
         self.button_login = QPushButton('Login', self)
         self.button_login.setFont(font_button)
-        self.button_login.setFixedSize(150, 30)
+        self.button_login.setFixedSize(150, 40)
         self.button_login.setStyleSheet("""
-            background-color: #1a1a1a;  
-            color: #ffffff;               
-            border: 1px solid #cccccc;    
+            QPushButton {
+                background-color: #444444;  
+                color: #ffffff;               
+                border: none; 
+                border-radius: 20px;  
+            }
+            QPushButton:hover {
+                background-color: #555555;  
+            }
         """)
-        self.button_login.clicked.connect(self.on_login_clicked)  # Подключаем обработчик
+        self.button_login.clicked.connect(self.on_login_clicked)
 
-        # Кнопка "Reset password"
-        self.button_reset = QPushButton('Reset password', self)
+        self.button_reset = QPushButton('Reset Password', self)
         self.button_reset.setFont(font_button)
-        self.button_reset.setFixedSize(150, 30)
+        self.button_reset.setFixedSize(120, 30)
         self.button_reset.setStyleSheet("""
-            background-color: #1a1a1a;  
-            color: #ffffff;               
-            border: 1px solid #cccccc;    
+            QPushButton {
+                background-color: #444444;  
+                color: #ffffff;               
+                border: none; 
+                border-radius: 20px;  
+            }
+            QPushButton:hover {
+                background-color: #555555;  
+            }
         """)
+        self.button_reset.clicked.connect(self.on_reset_clicked)
 
-        # Кнопка "Registration"
         self.button_register = QPushButton('Registration', self)
         self.button_register.setFont(font_button)
-        self.button_register.setFixedSize(150, 30)
+        self.button_register.setFixedSize(120, 30)
         self.button_register.setStyleSheet("""
-            background-color: #1a1a1a;  
-            color: #ffffff;               
-            border: 1px solid #cccccc;    
+            QPushButton {
+                background-color: #444444;  
+                color: #ffffff;               
+                border: none; 
+                border-radius: 20px;  
+            }
+            QPushButton:hover {
+                background-color: #555555;  
+            }
         """)
+        self.button_register.clicked.connect(self.on_register_clicked)
 
-        # Добавляем элементы на макет
+        layout.addWidget(self.label_subtitle)  
         layout.addWidget(self.label_title)
         layout.addWidget(self.login_input)
         layout.addWidget(self.password_input)
-        layout.addWidget(self.button_login)
 
-        # Добавляем вертикальные отступы
+        layout.addWidget(self.button_login, alignment=Qt.AlignmentFlag.AlignCenter)
+
         layout.addItem(QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
 
-        layout.addWidget(self.button_reset)
-        layout.addWidget(self.button_register)
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.button_reset)
+        button_layout.addWidget(self.button_register)
+        button_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addLayout(button_layout)
 
         self.setLayout(layout)
 
         self.setStyleSheet("""
             QWidget {
-                background-color: #000000; 
-            }
-            QLineEdit {
-                background-color: #333333; 
-                color: #ffffff; 
-                border: 1px solid #ffffff; 
+                background-color: #121212; 
+                border-radius: 20px;  
             }
         """)
 
@@ -102,15 +145,18 @@ class AuthWindow(QWidget):
             QMessageBox.warning(self, 'Ошибка', 'Пожалуйста, введите логин и пароль.')
             return
 
-        # Пример проверки логина и пароля
-        if login == "user" and password == "pass":  # Замените на вашу логику
-            print("Успешный вход.")  # Отладочный вывод
-            self.login_success.emit()  # Генерируем сигнал успешного входа
+        if login == "user" and password == "1":
+            self.login_success.emit(login)  # Передача имени пользователя
         else:
             QMessageBox.warning(self, 'Ошибка', 'Неверный логин или пароль.')
 
+    def on_reset_clicked(self):
+        QMessageBox.information(self, 'Информация', 'Сброс пароля временно недоступен.')
+
+    def on_register_clicked(self):
+        QMessageBox.information(self, 'Информация', 'Регистрация временно недоступна.')
+
 if __name__ == "__main__":
-    import sys
     app = QApplication(sys.argv)
     auth_window = AuthWindow()
     auth_window.show()

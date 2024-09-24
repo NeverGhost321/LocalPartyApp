@@ -8,17 +8,20 @@ def main():
 
     auth_window = AuthWindow()
     
-    # Создаем основное окно
-    main_window = MainWindow()  # Создаем экземпляр основного окна
-    auth_window.login_success.connect(lambda: show_main_window(auth_window, main_window))  # Подключаем сигнал
+    # Создание главного окна
+    main_window = MainWindow()
+
+    # Передача имени пользователя в главное окно при успешной авторизации
+    auth_window.login_success.connect(lambda username: show_main_window(auth_window, main_window, username))
+    
     auth_window.show()
 
     sys.exit(app.exec())
 
-def show_main_window(auth_window, main_window):
-    print("Показ основного окна...")  # Отладочный вывод
-    main_window.show()  # Показываем основное окно
-    auth_window.close()  # Закрываем окно аутентификации
+def show_main_window(auth_window, main_window, username):
+    main_window.update_profile(username)
+    main_window.show()
+    auth_window.close()
 
 if __name__ == "__main__":
     main()
